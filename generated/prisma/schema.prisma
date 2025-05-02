@@ -1,0 +1,106 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id   String @id @default(cuid())
+  nama String
+  user User[]
+}
+
+model User {
+  id                 String               @id @default(cuid())
+  nama               String
+  roleId             String
+  role               Role                 @relation(fields: [roleId], references: [id])
+  email              String               @unique
+  foto               String?
+  password           String
+  token              String?
+  outline            Outline[]
+  proposal           Proposal[]
+  skripsi            Skripsi[]
+  proposalPembimbing ProposalPembimbing[]
+  skripsiPenguji     SkripsiPenguji[]
+}
+
+model Outline {
+  id       String        @id @default(cuid())
+  userId   String
+  user     User          @relation(fields: [userId], references: [id])
+  file     String
+  status   OutlineStatus @relation(fields: [statusId], references: [id])
+  statusId String
+}
+
+model OutlineStatus {
+  id      String    @id @default(cuid())
+  nama    String // e.g. "Menunggu", "Lulus", "Tidak Lulus"
+  outline Outline[]
+}
+
+model Proposal {
+  id              String               @id @default(cuid())
+  userId          String
+  user            User                 @relation(fields: [userId], references: [id])
+  file            String
+  status          ProposalStatus       @relation(fields: [statusId], references: [id])
+  statusId        String
+  dosenPembimbing ProposalPembimbing[]
+}
+
+model ProposalStatus {
+  id       String     @id @default(cuid())
+  nama     String // e.g. "Menunggu", "Lulus", "Revisi"
+  proposal Proposal[]
+}
+
+model ProposalPembimbing {
+  id         String  @id @default(cuid())
+  proposalId String
+  userId     String // Dosen sebagai pembimbing
+  setuju     Boolean @default(false)
+
+  proposal Proposal @relation(fields: [proposalId], references: [id])
+  dosen    User     @relation(fields: [userId], references: [id])
+}
+
+model Skripsi {
+  id               String           @id @default(cuid())
+  userId           String
+  user             User             @relation(fields: [userId], references: [id])
+  file             String
+  status           SkripsiStatus    @relation(fields: [statusId], references: [id])
+  statusId         String
+  pembimbingSetuju Boolean          @default(false)
+  penguji          SkripsiPenguji[]
+}
+
+model SkripsiStatus {
+  id      String    @id @default(cuid())
+  nama    String // e.g. "Menunggu", "Siap Ujian", "Revisi", "Lulus"
+  skripsi Skripsi[]
+}
+
+model SkripsiPenguji {
+  id        String  @id @default(cuid())
+  skripsiId String
+  userId    String // Dosen penguji
+  revisi    String? // Catatan revisi
+  setuju    Boolean @default(false)
+
+  skripsi Skripsi @relation(fields: [skripsiId], references: [id])
+  dosen   User    @relation(fields: [userId], references: [id])
+}
